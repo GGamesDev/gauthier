@@ -1,0 +1,12 @@
+# dependencies & build output
+node_modules/
+dist/
+src-tauri/target/
+src-tauri/gen/
+**/target/
+src-tauri/resources/**/Cargo.lock
+
+# editors & OS
+.DS_Store
+.vscode-test/
+*.log
