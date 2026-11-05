@@ -1,0 +1,8 @@
+[package]
+name = "picorust-fs-core"
+version = "0.1.0"
+edition = "2021"
+description = "Tiny power-safe flash file system used by picorust-runtime (no_std, no dependencies)"
+license = "MIT OR Apache-2.0"
+
+[dependencies]

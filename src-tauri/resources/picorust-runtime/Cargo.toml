@@ -1,0 +1,60 @@
+[package]
+name = "picorust-runtime"
+version = "0.1.0"
+edition = "2021"
+description = "USB serial console + remote BOOTSEL reset for Raspberry Pi Pico firmware in Rust (used by the Gauthier IDE)"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/GGamesDev/gauthier"
+keywords = ["rp2040", "rp2350", "pico", "usb", "embedded"]
+categories = ["embedded", "no-std"]
+
+[features]
+default = ["panic-handler"]
+
+# Choose exactly ONE stack/chip combination.
+embassy-rp2040 = ["_embassy", "_rp2040", "dep:portable-atomic"]
+embassy-rp235x = ["_embassy", "_rp235x"]
+hal-rp2040 = ["_hal", "_rp2040", "dep:rp2040-hal"]
+hal-rp235x = ["_hal", "_rp235x", "dep:rp235x-hal"]
+
+# Install a #[panic_handler] that reboots into "safe mode": the panic message is
+# printed on the USB console and the board stays flashable without BOOTSEL.
+panic-handler = []
+
+# Embassy only: MS OS 2.0 descriptors so Windows binds WinUSB to the reset interface
+# (picotool -f without Zadig). Off by default until validated on macOS.
+winusb = []
+
+_embassy = [
+    "dep:embassy-rp",
+    "dep:embassy-usb",
+    "dep:embassy-sync",
+    "dep:embassy-executor",
+    "dep:embassy-futures",
+    "dep:embassy-time",
+    "dep:picorust-fs-core",
+    "dep:static_cell",
+]
+_hal = ["dep:usb-device", "dep:usbd-serial"]
+_rp2040 = []
+_rp235x = []
+
+[dependencies]
+picorust-fs-core = { path = "fs-core", version = "0.1", optional = true }
+cortex-m = "0.7"
+critical-section = "1.2"
+
+embassy-rp = { version = "0.10", optional = true }
+embassy-usb = { version = "0.6", optional = true, features = ["max-interface-count-8"] }
+embassy-sync = { version = "0.8", optional = true }
+embassy-executor = { version = "0.10", optional = true }
+embassy-futures = { version = "0.1", optional = true }
+embassy-time = { version = "0.5", optional = true }
+static_cell = { version = "2.1", optional = true }
+# RP2040 (Cortex-M0+) has no atomic CAS: static_cell needs this.
+portable-atomic = { version = "1", optional = true, features = ["critical-section"] }
+
+rp2040-hal = { version = "0.12", optional = true }
+rp235x-hal = { version = "0.4", optional = true }
+usb-device = { version = "0.3", optional = true }
+usbd-serial = { version = "0.2", optional = true }
