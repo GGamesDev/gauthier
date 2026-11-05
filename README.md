@@ -39,9 +39,18 @@ no BOOTSEL button, no copying `.uf2` files around.
 **Setup**
 - On first launch, Gauthier installs what is missing: Rust (rustup), the Pico targets, picotool and rust-analyzer
 
+## Install
+
+Download `Gauthier_<version>_aarch64.dmg` from the [releases page](https://github.com/GGamesDev/gauthier/releases),
+open it and drag Gauthier to *Applications*.
+
+- Prebuilt builds are for **Apple Silicon Macs** (M1 and later). On other systems, build from source (below).
+- The app is not notarized by Apple yet. The first time, macOS refuses to open it: right-click Gauthier →
+  **Open**, or go to *System Settings → Privacy & Security* and click **Open Anyway**. Only needed once.
+
 ## Getting started
 
-Download the app from the releases page, or build it yourself:
+Build it yourself:
 
 ```bash
 npm install
