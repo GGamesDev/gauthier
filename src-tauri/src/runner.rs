@@ -203,7 +203,7 @@ impl Runner {
             _ => {
                 set_state(app, "flashing", "Sending to the Pico…");
                 self.files.reset();
-                pico::flash(app, &project::elf_path(target), &self.cancel)?;
+                pico::flash(app, &project::elf_path(target), target, &self.cancel)?;
                 // Thonny-like: the source of the program on the board is main.rs.
                 if pico::wait_for_files_port(Duration::from_secs(6)) {
                     match self.files.write("main.rs", code.as_bytes()) {

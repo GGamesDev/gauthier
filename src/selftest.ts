@@ -282,6 +282,24 @@ export async function selftest(mode: string, setCode: (s: string) => void, getCo
         $('btn-stop').click();
         await until('stopped', () => state().includes('idle'), 5000);
       });
+    } else if (mode === 'board-mismatch') {
+      // A Pico (RP2040) is plugged in but the target says Pico 2.
+      setTarget('pico2');
+      await sleep(300);
+      await step('wrong target: refused before writing, then "switch and Run" works', async () => {
+        await pickExample('Talk to the Pico');
+        $('btn-run').click();
+        await until('mismatch dialog', () => (document.getElementById('choice-dialog') as HTMLDialogElement).open, 300000);
+        const title = $('choice-title').textContent ?? '';
+        if (!title.includes('RP2040')) throw new Error('dialog: ' + title);
+        if (consoleText().includes('Program sent to the Pico')) throw new Error('something was written');
+        log.push(`     dialog: ${title}`);
+        document.querySelector<HTMLElement>('#choice-buttons [data-choice="switch"]')!.click();
+        await until('target switched', () => $<HTMLSelectElement>('target').value === 'pico', 3000);
+        await until('runs on the RP2040', () => consoleText().split('── Run').pop()!.includes('Type something'), 300000);
+        await type('rp2040');
+        await until('echo', () => consoleText().includes('The Pico heard: rp2040'), 8000);
+      });
     } else if (mode === 'pico2-files' || mode === 'pico-files') {
       await filesScenario(mode.replace('-files', ''), setCode, getCode, step, log);
     } else {

@@ -732,6 +732,25 @@ function debugEnded() {
   clearDebugPanel('The program is not being debugged.');
 }
 
+// The board plugged in is not the one selected: offer to switch and run again.
+void listen<{ board: TargetId; target: TargetId }>('board-mismatch', async (e) => {
+  const names: Record<TargetId, string> = { desktop: 'this computer', pico: 'Raspberry Pi Pico (RP2040)', pico2: 'Raspberry Pi Pico 2 (RP2350)' };
+  const answer = await choose(
+    `This board is a ${names[e.payload.board]}`,
+    `The target menu says ${names[e.payload.target]}. Nothing was written to the board.`,
+    [
+      ['cancel', 'Cancel', 'secondary'],
+      ['switch', `Use ${names[e.payload.board]} and Run`, 'primary'],
+    ],
+  );
+  if (answer === 'switch') {
+    setTarget(e.payload.board, false);
+    // Let the failed run finish before starting again.
+    for (let i = 0; i < 50 && runState !== 'idle'; i++) await new Promise((r) => setTimeout(r, 100));
+    void run();
+  }
+});
+
 void listen<Stopped>('debug-stopped', (e) => {
   if (!debugTab) return;
   if (debugTab !== active && tabs.includes(debugTab)) activate(debugTab);

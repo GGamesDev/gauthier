@@ -5,8 +5,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use tauri::AppHandle;
+use tauri::{AppHandle, Emitter};
 
+use crate::project::Target;
 use crate::runner::{console, set_state};
 use crate::tools;
 
@@ -266,8 +267,53 @@ fn last_line(out: &str) -> String {
 }
 
 /// Flashes the program and starts it.
-pub fn flash(app: &AppHandle, elf: &Path, cancel: &AtomicBool) -> Result<(), String> {
+/// Chip of the board in BOOTSEL mode, read from its boot ROM.
+fn bootsel_chip() -> Option<Target> {
+    let (ok, out) = picotool(&["info", "-d"]);
+    if !ok {
+        return None;
+    }
+    let chip = out.lines().find_map(|l| l.trim().strip_prefix("type:").map(|t| t.trim().to_string()))?;
+    if chip.starts_with("RP2040") {
+        Some(Target::Pico)
+    } else if chip.starts_with("RP235") {
+        Some(Target::Pico2)
+    } else {
+        None
+    }
+}
+
+fn board_name(t: Target) -> &'static str {
+    match t {
+        Target::Pico => "Raspberry Pi Pico (RP2040)",
+        Target::Pico2 => "Raspberry Pi Pico 2 (RP2350)",
+        Target::Desktop => "this computer",
+    }
+}
+
+#[derive(serde::Serialize, Clone)]
+pub struct BoardMismatch {
+    pub board: Target,
+    pub target: Target,
+}
+
+pub fn flash(app: &AppHandle, elf: &Path, target: Target, cancel: &AtomicBool) -> Result<(), String> {
     enter_bootsel(app, cancel, Duration::from_secs(120))?;
+
+    // A program built for the other chip would not start (the board would stay in BOOTSEL).
+    if let Some(board) = bootsel_chip() {
+        if board != target {
+            // Give the board back its current program (if it has a valid one).
+            let _ = picotool(&["reboot"]);
+            let _ = app.emit("board-mismatch", BoardMismatch { board, target });
+            return Err(format!(
+                "This board is a {}, but the program was built for the {}. Choose \"{}\" in the target menu and press Run again.",
+                board_name(board),
+                board_name(target),
+                board_name(board)
+            ));
+        }
+    }
 
     set_state(app, "flashing", "Writing the program to the Pico…");
     let elf = elf.to_string_lossy();
