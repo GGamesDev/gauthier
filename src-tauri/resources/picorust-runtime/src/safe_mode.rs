@@ -68,7 +68,7 @@ pub(crate) fn write_banner(mut out: impl FnMut(&[u8])) {
     if let Some(msg) = panic_message() {
         out(b"\r\n\x1b[31m*** PicoRust: the firmware panicked ***\x1b[0m\r\n");
         out(msg);
-        out(b"\r\n\x1b[33m(safe mode: the firmware is stopped, run it again from VS Code)\x1b[0m\r\n");
+        out(b"\r\n\x1b[33m(safe mode: your program is stopped; run it again to restart it)\x1b[0m\r\n");
     }
 }
 
